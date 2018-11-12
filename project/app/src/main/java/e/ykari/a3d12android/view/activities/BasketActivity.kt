@@ -1,6 +1,8 @@
 package e.ykari.a3d12android.view.activities
 
-class BasketActivity {
+import android.support.v7.app.AppCompatActivity
+
+class BasketActivity : AppCompatActivity() {
 
 
 }

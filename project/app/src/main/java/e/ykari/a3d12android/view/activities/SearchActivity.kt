@@ -1,4 +1,6 @@
 package e.ykari.a3d12android.view.activities
 
-class SearchActivity {
+import android.support.v7.app.AppCompatActivity
+
+class SearchActivity : AppCompatActivity() {
 }
