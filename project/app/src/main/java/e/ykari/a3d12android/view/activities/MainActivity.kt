@@ -16,7 +16,19 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         basket_button.setOnClickListener {
-            val intent = Intent(this@MainActivity, BasketActivity::class.java)
+            val intent : Intent = Intent(this@MainActivity, BasketActivity::class.java)
+            startActivity(intent)
+
+
+        }
+        recette_button.setOnClickListener {
+            val intent : Intent = Intent(this@MainActivity, RecetteActivity::class.java)
+            startActivity(intent)
+
+
+        }
+        search_button.setOnClickListener {
+            val intent : Intent = Intent(this@MainActivity, SearchActivity::class.java)
             startActivity(intent)
 
 
