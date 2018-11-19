@@ -4,15 +4,19 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.net.wifi.WifiManager
 import android.net.wifi.p2p.WifiP2pConfig
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pDeviceList
 import android.net.wifi.p2p.WifiP2pManager
+import android.nfc.Tag
 import android.os.AsyncTask
 import android.os.Environment
 import android.support.v7.app.AppCompatActivity
 import android.system.Os.close
+import android.util.Log
 import android.widget.TextView
+import android.widget.Toast
 import java.io.File
 import java.io.FileOutputStream
 import java.net.InetSocketAddress
@@ -28,26 +32,50 @@ class WiFiDirectBroadcastReceiver(
         private val mChannel: WifiP2pManager.Channel,
         private val mActivity: MyWifiActivity
 ) : BroadcastReceiver() {
+    private val peers = mutableListOf<WifiP2pDevice>()
+    ...
 
+    private val peerListListener = WifiP2pManager.PeerListListener { peerList ->
+        val refreshedPeers = peerList.deviceList
+        if (refreshedPeers != peers) {
+            peers.clear()
+            peers.addAll(refreshedPeers)
+
+            // If an AdapterView is backed by this data, notify it
+            // of the change. For instance, if you have a ListView of
+            // available peers, trigger an update.
+            (listAdapter as WiFiPeerListAdapter).notifyDataSetChanged()
+
+            // Perform any other updates needed based on the new list of
+            // peers connected to the Wi-Fi P2P network.
+        }
+
+        if (peers.isEmpty()) {
+            Log.d(TAG, "No devices found")
+            return@PeerListListener
+        }
+    }
     override fun onReceive(context: Context, intent: Intent) {
         val action: String = intent.action
         when (action) {
             WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> {
                 // Check to see if Wi-Fi is enabled and notify appropriate activity
                 val state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1)
-                when (state) {
-                    WifiP2pManager.WIFI_P2P_STATE_ENABLED -> {
+                activity.isWifiP2pEnabled = state == WifiP2pManager.WIFI_P2P_STATE_ENABLED
+                //when (state) {
+                   //wifiP2pManager.WIFI_P2P_STATE_ENABLED -> {
                         // Wifi P2P is enabled
-                    }
-                    else -> {
+                    //}
+                    //else -> {
                         // Wi-Fi P2P is not enabled
                     }
-                }
-            }
+
             WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION -> {
                 // Call WifiP2pManager.requestPeers() to get a list of current peers
-                mManager?.requestPeers(mChannel) { peers: WifiP2pDeviceList? ->
+                mManager?.requestPeers(mChannel,peerListListener) { peers: WifiP2pDeviceList? ->
                     // Handle peers list
+                    Log.d(Tag,"P2P peers changed")
+                }
             }
             WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION -> {
                 // Respond to new connection or disconnections
@@ -55,7 +83,11 @@ class WiFiDirectBroadcastReceiver(
             }
             WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION -> {
                 // Respond to this device's wifi state changing
-            }
+                    (activity.supportFragmentManager.findFragmentById(R.id.frag_list) as DeviceListFragment)
+                            .apply {
+                                updateThisDevice(
+                                        intent.getParcelableExtra(
+                                                WifiP2pManager.EXTRA_WIFI_P2P_DEVICE) as WifiP2pDevice) }
         }
     }
 
@@ -64,7 +96,6 @@ class WiFiDirectBroadcastReceiver(
         config.deviceAddress = device.deviceAddress
         mChannel?.also { channel ->
             mManager?.connect(channel, config, object : WifiP2pManager.ActionListener {
-
                 override fun onSuccess() {
                     //success logic
                 }
@@ -78,7 +109,8 @@ class WiFiDirectBroadcastReceiver(
     override fun onResume() {
         super.onResume()
         mReceiver?.also { receiver ->
-            registerReceiver(receiver, mIntentFilter)
+            registerReceiver(receiver, mIntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+            super.onResume()
         }
     }
 
@@ -89,6 +121,31 @@ class WiFiDirectBroadcastReceiver(
             unregisterReceiver(receiver)
         }
     }
+
+        override fun connect() {
+            // Picking the first device found on the network.
+            val device = peers[0]
+
+            val config = WifiP2pConfig().apply {
+                deviceAddress = device.deviceAddress
+                wps.setup = WpsInfo.PBC
+            }
+
+            mManager.connect(mChannel, config, object : WifiP2pManager.ActionListener {
+
+                override fun onSuccess() {
+                    // WiFiDirectBroadcastReceiver notifies us. Ignore for now.
+                }
+
+                override fun onFailure(reason: Int) {
+                    Toast.makeText(
+                            this@WiFiDirectActivity,
+                            "Connect failed. Retry.",
+                            Toast.LENGTH_SHORT
+                    ).show()
+                }
+            })
+        }
 
 
 }
