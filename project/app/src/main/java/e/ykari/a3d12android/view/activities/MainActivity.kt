@@ -36,3 +36,21 @@ class MainActivity : AppCompatActivity() {
 
     }
 }
+
+override fun onReceive(context: Context, intent: Intent) {
+    ... 
+    val action: String = intent.action
+    when (action) {
+        WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> {
+            val state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1)
+            when (state) {
+                WifiP2pManager.WIFI_P2P_STATE_ENABLED -> {
+                    // Wifi P2P is enabled
+                }
+                else -> {
+                    // Wi-Fi P2P is not enabled
+                }
+            }
+        }
+    }
+}
