@@ -19,6 +19,8 @@
         <activity android:name=".view.activities.BasketActivity"></activity>
         <activity android:name=".view.activities.RecetteActivity"></activity>
         <activity android:name=".view.activities.SearchActivity"></activity>
+
+
     </application>
 
 </manifest>
