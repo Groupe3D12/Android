@@ -1,6 +1,8 @@
 package e.ykari.a3d12android.view.activities
 
 import android.content.Intent
+import android.content.IntentFilter
+import android.net.wifi.p2p.WifiP2pManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -8,6 +10,7 @@ import android.util.Log
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.concurrent.thread
 import e.ykari.a3d12android.R
+import java.nio.channels.Channel
 
 class MainActivity : AppCompatActivity() {
 
@@ -34,23 +37,20 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-    }
-}
+        mChannel = mManager?.initialize(this, mainLooper, null)
+        mChannel?.also {
+            channel -->
+                    mReceiver = WiFiDirectBroadcastReceiver(mManager, channel, this)
 
-override fun onReceive(context: Context, intent: Intent) {
-    ... 
-    val action: String = intent.action
-    when (action) {
-        WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION -> {
-            val state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1)
-            when (state) {
-                WifiP2pManager.WIFI_P2P_STATE_ENABLED -> {
-                    // Wifi P2P is enabled
-                }
-                else -> {
-                    // Wi-Fi P2P is not enabled
-                }
-            }
         }
+
+        val mIntentFilter = IntentFilter().apply {
+            addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)
+            addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)
+            addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
+            addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
+        }
+
+
     }
 }
