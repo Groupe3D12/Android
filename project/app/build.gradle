@@ -24,8 +24,8 @@ android {
 
 dependencies {
 
-    implementation "android.arch.persistance.room:runetime:1.1.1"
-    kapt "android.arch.persistance.room:compiler:1.1.1"
+    //implementation "android.arch.persistance.room:runetime:1.1.1"
+    //kapt "android.arch.persistance.room:compiler:1.1.1"
 
     implementation 'com.google.code.gson:gson:2.8.5'
 

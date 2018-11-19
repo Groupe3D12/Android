@@ -35,6 +35,24 @@ class WiFiDirectBroadcastReceiver(
     private val peers = mutableListOf<WifiP2pDevice>()
     ...
 
+    private val connectionListener = WifiP2pManager.ConnectionInfoListener { info ->
+
+        // InetAddress from WifiP2pInfo struct.
+        val groupOwnerAddress: String = info.groupOwnerAddress.hostAddress
+
+        // After the group negotiation, we can determine the group owner
+        // (server).
+        if (info.groupFormed && info.isGroupOwner) {
+            // Do whatever tasks are specific to the group owner.
+            // One common case is creating a group owner thread and accepting
+            // incoming connections.
+        } else if (info.groupFormed) {
+            // The other device acts as the peer (client). In this case,
+            // you'll want to create a peer thread that connects
+            // to the group owner.
+        }
+    }
+
     private val peerListListener = WifiP2pManager.PeerListListener { peerList ->
         val refreshedPeers = peerList.deviceList
         if (refreshedPeers != peers) {
@@ -79,8 +97,21 @@ class WiFiDirectBroadcastReceiver(
             }
             WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION -> {
                 // Respond to new connection or disconnections
+                mManager?.let { manager ->
 
+                    val networkInfo: NetworkInfo? = intent
+                            .getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO) as NetworkInfo
+
+                    if (networkInfo?.isConnected == true) {
+
+                        // We are connected with the other device, request connection
+                        // info to find group owner IP
+
+                        manager.requestConnectionInfo(mChannel, connectionListener)
+                    }
+                }
             }
+
             WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION -> {
                 // Respond to this device's wifi state changing
                     (activity.supportFragmentManager.findFragmentById(R.id.frag_list) as DeviceListFragment)
